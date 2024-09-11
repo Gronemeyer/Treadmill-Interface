@@ -194,6 +194,21 @@ void encoderBInt()
      
 }
 
+void setDACspeed(float speed)
+{
+    float dacval = abs(speed)/MAXSPEED * maxDACval; 
+    if( dacval < 0 ) dacval = 0;             
+    if( dacval > maxDACval) dacval = maxDACval; 
+
+    analogWrite(speedPin,(uint16_t) dacval);
+       
+    if( runSpeed < 0 ) 
+       digitalWrite(dirPin, HIGH); // and note reverse dir 
+    else
+       digitalWrite(dirPin, LOW);  // else note forward
+}
+       
+
 void setup()
 {
 
@@ -228,7 +243,8 @@ boolean moved = false;
 
   if( Serial.available() )
   {
-     if ( Serial.read() == '?' )
+     int8_t charin = Serial.read();
+     if ( charin == '?' )
      {
        Serial.print("Treadmill V:");
        Serial.println(VERSION);
@@ -239,7 +255,20 @@ boolean moved = false;
           Serial.print("micros,");
        #endif
        Serial.println("distance (mm),speed (mm/s)");     
-     }  
+     } 
+     else if ( charin == 'c' )
+     {
+        Serial.print("Speed output calibrate, 0 to ");
+        Serial.print(MAXSPEED);
+        Serial.println(" mm/sec");
+        for( float speed = 0; speed <= MAXSPEED; speed += MAXSPEED/5)
+        {
+           setDACspeed(speed);
+           Serial.println(speed);
+           delay(5000);
+        }  
+      //  setDACspeed(0);   
+     }
   }
   
   noInterrupts();
@@ -268,18 +297,11 @@ boolean moved = false;
        Serial.println( runSpeed); 
             
        lastDistance = cumDistance;
+
+       setDACspeed(runSpeed);
   
-       float dacval = abs(runSpeed)/MAXSPEED * maxDACval; 
-       if( dacval < 0 ) dacval = 0;   
-               
-       if( dacval > maxDACval) dacval = maxDACval; 
-  
-       analogWrite(speedPin,(uint16_t) dacval);
-        
-       if( runSpeed < 0 ) 
-          digitalWrite(dirPin, HIGH); // and note reverse dir 
-       else
-          digitalWrite(dirPin, LOW);  // else note forward
+
+ 
      }
      
   }
