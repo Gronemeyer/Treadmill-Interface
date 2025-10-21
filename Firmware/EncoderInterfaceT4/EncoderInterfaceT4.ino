@@ -291,13 +291,10 @@ boolean moved = false;
      if( (cumDistance - lastDistance) > 0 )
   #endif     
      { 
-       int32_t usecs = newUsecs - lastUsecs;        
-       lastUsecs = newUsecs;  
-       runSpeed = (1e6 * (cumDistance - lastDistance) ) / (float)usecs;
+       // Print monotonic time instead of raw micros() to avoid rollover
        #ifdef SHOW_MICROS     
-         Serial.print(newUsecs);   
+         Serial.print((unsigned long long)monoUsecs);   
          Serial.print(","); 
-         
        #endif     
        Serial.print(cumDistance);
        Serial.print(",");
@@ -306,9 +303,6 @@ boolean moved = false;
        lastDistance = cumDistance;
 
        setDACspeed(runSpeed);
-  
-
- 
      }
      
   }
@@ -316,7 +310,7 @@ boolean moved = false;
   else 
   {
      uint32_t zeroUsecs = micros();
-     if( (unint32t) (zeroUsecs - lastUsecs) > SPEED_TIMEOUT )
+     if( (uint32_t) (zeroUsecs - lastUsecs) > SPEED_TIMEOUT )
      {
         uint32_t dz = (uint32_t)(zeroUsecs - lastUsecs);
         monoUsecs += dz;
